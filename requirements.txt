@@ -1,0 +1,5 @@
+flask>=2.2.5
+torch          # if you want specific CUDA, install via pytorch.org index instead
+transformers>=4.41.0
+googletrans==4.0.0-rc1
+PyPDF2>=3.0.1

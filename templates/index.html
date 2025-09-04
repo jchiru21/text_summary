@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Text Summarizer</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+  <style>
+    body { background-color: #f8f9fa; }
+    .container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 8px; padding: 24px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
+    textarea { resize: vertical; }
+    .muted { color:#6c757d; font-size: 0.9rem; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mb-3">Text Summarizer</h1>
+    <p class="muted">Abstractive summarization (T5). Upload a PDF or paste text, choose a target length and language.</p>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }}" role="alert">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="input_text">Input Text</label>
+        <textarea class="form-control mono" id="input_text" name="input_text" rows="8"
+          placeholder="Paste your content here...">{{ input_text }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="input_file">Upload PDF (optional)</label>
+        <input type="file" class="form-control-file" id="input_file" name="input_file" />
+        <small class="form-text text-muted">Tip: scanned PDFs need OCR; this app extracts text from selectable PDFs only.</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label for="summary_length">Summary Length Target</label>
+          <input type="number" class="form-control" id="summary_length" name="summary_length"
+                 value="{{ summary_length }}" min="50" max="512" />
+          <small class="form-text text-muted">We aim near this size. Bigger ≠ always better—models are capped at 512 tokens here.</small>
+        </div>
+
+        <div class="form-group col-md-6">
+          <label for="language">Output Language</label>
+          <select class="form-control" id="language" name="language">
+            {% for code, lang_name in languages.items() %}
+              <option value="{{ code }}" {% if code == language %}selected{% endif %}>
+                {{ lang_name | capitalize }} ({{ code }})
+              </option>
+            {% endfor %}
+          </select>
+          <small class="form-text text-muted">English skips translation; other languages are translated via Google Translate.</small>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Summarize</button>
+    </form>
+
+    {% if summary %}
+      <hr/>
+      <h3>Summary</h3>
+      <p class="mono">{{ summary }}</p>
+
+      {% if translated_summary %}
+        <h4 class="mt-4">Translated Summary ({{ languages[language] | capitalize }})</h4>
+        <p class="mono">{{ translated_summary }}</p>
+      {% endif %}
+    {% endif %}
+
+    {% if previous_summaries and previous_summaries|length > 0 %}
+      <hr/>
+      <h5>Previous Runs (last {{ previous_summaries|length }})</h5>
+      <ul>
+        {% for item in previous_summaries %}
+          {% set _input, _sum, _tsum, _lang = item %}
+          <li>
+            <span class="muted">Lang:</span> <strong>{{ _lang }}</strong> —
+            <span class="muted">Summary:</span> {{ _sum[:120] }}{% if _sum|length > 120 %}…{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="text-center mt-5 mb-3">
+      <hr/>
+      <p class="text-muted">
+        &copy; 2025 Chiranjeevi — Licensed under the MIT License
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
